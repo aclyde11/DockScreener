@@ -17,17 +17,11 @@ from utils import Avg, MetricCollector
 
 def poolapply(i):
     try:
-        print(i)
-        if i[0] == 'CCC[C@@H]1C[C@H](C(=O)Nc2cccc(OCC(=O)N(C)C)c2)CCO1':
-            return None
         x = i[0]
         y = i[1]
-        print("making g")
         g  = featmaker.get_dgl_graph(x)
-        print("doneg")
         t = np.array([y]).reshape((1, 1))
-        print("done t")
-        return t
+        return t,g
     except:
         return None
 
@@ -37,8 +31,9 @@ def load_cora_data(f):
     df = pd.read_csv(f)
     pairs = map(lambda x : (str(x[0]), float(x[1])), df.itertuples(index=False))
 
-    with multiprocessing.Pool(processes=1) as pool:
-        graphs = list(tqdm(pool.imap(poolapply, pairs)))
+    # with multiprocessing.Pool(processes=1) as pool:
+    #     graphs = list(tqdm(pool.imap(poolapply, pairs)))
+    graphs = [poolapply(i) for i in tqdm(pairs)]
     print("done")
     graphs = list(filter(lambda x: x is not None or x[0] is not None, graphs))
     return graphs

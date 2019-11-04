@@ -128,7 +128,6 @@ def get_dgl_graph(smiles):
        :param smiles: A smiles string.
        :param args: Arguments.
        """
-    print("enter dgl")
     g = dgl.DGLGraph()
 
     # Convert smiles to molecule
@@ -138,12 +137,10 @@ def get_dgl_graph(smiles):
     # fake the number of "atoms" if we are collapsing substructures
     n_atoms = mol.GetNumAtoms()
 
-    print('atoms')
     for i, atom in enumerate(mol.GetAtoms()):
         g.add_nodes(1, data={'atom_features': torch.from_numpy(atom_features(atom)).view(1, -1)})
 
     # Get bond features
-    print('bonds')
     for a1 in range(n_atoms):
         for a2 in range(a1 + 1, n_atoms):
             bond = mol.GetBondBetweenAtoms(a1, a2)
@@ -156,5 +153,4 @@ def get_dgl_graph(smiles):
             d = {'edge_features': torch.from_numpy(f_bond).view(1, -1)}
             g.add_edge(a1, a2, data=d)
             g.add_edge(a2, a1, data=d)
-    print("exit")
     return g
