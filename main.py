@@ -11,7 +11,7 @@ from features import utils as featmaker
 from models.GAT import GAT
 from tqdm import tqdm
 import argparse
-from utils import Avg
+from utils import Avg, MetricCollector
 
 
 def poolapply(i):
@@ -76,9 +76,11 @@ if __name__ == '__main__':
         net.eval()
         with torch.no_grad():
             test_avg = Avg()
+            r2= MetricCollector
             for g, v in test_loader:
                 v = v.to(dev)
                 v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
                 loss = F.mse_loss(v, v_pred)
                 test_avg(loss.item())
-            print("epoch", epoch, "test loss", test_avg.avg())
+                r2(v, v_pred)
+            print("epoch", epoch, "test loss", test_avg.avg(), r2.r2())
