@@ -74,10 +74,11 @@ if __name__ == '__main__':
         print("epoch", epoch, "train loss", train_avg.avg())
 
         net.eval()
-        test_avg = Avg()
-        for g, v in test_loader:
-            v = v.to(dev)
-            v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            loss = F.mse_loss(v, v_pred)
-            test_avg(loss.item())
-        print("epoch", epoch, "test loss", test_avg.avg())
+        with torch.no_grad():
+            test_avg = Avg()
+            for g, v in test_loader:
+                v = v.to(dev)
+                v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                loss = F.mse_loss(v, v_pred)
+                test_avg(loss.item())
+            print("epoch", epoch, "test loss", test_avg.avg())
