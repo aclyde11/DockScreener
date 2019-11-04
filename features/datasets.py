@@ -9,7 +9,7 @@ class GraphDataset(Dataset):
         assert (len(self.graphs) == len(self.values))
 
     def __getitem__(self, item):
-        return self.graphs[item], self.values[item]
+        return self.graphs[item], torch.from_numpy(self.values[item])
 
     def __len__(self):
         return len(self.graphs)

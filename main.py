@@ -25,7 +25,7 @@ def poolapply(i):
         print("making g")
         g  = featmaker.get_dgl_graph(x)
         print("doneg")
-        t = torch.FloatTensor([y]).view(1, 1)
+        t = np.array([y]).reshape((1, 1))
         print("done t")
         return g,t
     except:
