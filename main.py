@@ -22,10 +22,14 @@ def poolapply(i):
             return None
         x = i[0]
         y = i[1]
-        return (featmaker.get_dgl_graph(x),
-                torch.FloatTensor([y]).view(1, 1))
+        print("making g")
+        g  = featmaker.get_dgl_graph(x)
+        print("doneg")
+        t = torch.FloatTensor([y]).view(1, 1)
+        print("done t")
+        return g,t
     except:
-        return None
+        return None, None
 
 
 def load_cora_data(f):
