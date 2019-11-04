@@ -26,7 +26,7 @@ def poolapply(i):
 
 def load_cora_data(f):
     print("Loading data")
-    df = pd.read_csv(f, nrows=args.n)
+    df = pd.read_csv(f)
     with multiprocessing.Pool(processes=12) as pool:
         graphs = pool.map(poolapply, df.values)
     print("done")
