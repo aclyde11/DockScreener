@@ -1,3 +1,5 @@
+import sys
+sys.settrace()
 import time
 
 import numpy as np
@@ -16,6 +18,7 @@ from utils import Avg, MetricCollector
 
 def poolapply(i):
     try:
+        print(i)
         x = i[0]
         y = i[1]
         return (featmaker.get_dgl_graph(x),
@@ -29,8 +32,8 @@ def load_cora_data(f):
     df = pd.read_csv(f)
     pairs = map(lambda x : (str(x[0]), float(x[1])), df.itertuples(index=False))
 
-    with multiprocessing.Pool(processes=12) as pool:
-        graphs = list(tqdm(pool.imap_unordered(poolapply, pairs)))
+    with multiprocessing.Pool(processes=1) as pool:
+        graphs = list(tqdm(pool.imap(poolapply, pairs)))
     print("done")
     graphs = list(filter(lambda x: x is not None or x[0] is not None, graphs))
     return graphs
