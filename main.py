@@ -9,13 +9,20 @@ from torch.utils.data import DataLoader
 from features import datasets
 from features import utils as featmaker
 from models.GAT import GAT
+from tqdm import tqdm
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-i', type=str, required=True)
+parser.add_argument('-b', type=int, default=100)
+parser.add_argument('-n', type=int, default=1000)
+args = parser.parse_args()
 
-BATCH_SIZE=100
+BATCH_SIZE=args.b
 
 def load_cora_data():
-    df = pd.read_csv("/Users/austin/data/lyu_docking_data/AmpC_screen_table_eval.csv", nrows=1000)
+    df = pd.read_csv(args.i, nrows=args.n)
     graphs = []
-    for i in range(df.shape[0]):
+    for i in tqdm(range(df.shape[0])):
         graphs.append((featmaker.get_dgl_graph(df.iloc[i, 0]),
                        torch.FloatTensor([df.iloc[i, 1]]).view(1, 1)))
     return graphs
