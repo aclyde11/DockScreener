@@ -38,7 +38,7 @@ if __name__ == '__main__':
     g = datasets.GraphDataset(load_cora_data())
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, num_workers=3, batch_size=100)
 
-    net = GAT(133, 14)
+    net = GAT(133, 14).to(dev)
 
     # create optimizer
     optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
@@ -49,8 +49,8 @@ if __name__ == '__main__':
         for g, v in train_loader:
             if epoch >= 3:
                 t0 = time.time()
-
-            v_pred = net(g, g.ndata['atom_features'], g.edata['edge_features'])
+            v = v.to(dev)
+            v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
             loss = F.mse_loss(v, v_pred)
             optimizer.zero_grad()
             loss.backward()
