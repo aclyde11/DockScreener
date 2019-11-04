@@ -27,7 +27,7 @@ def poolapply(i):
 def load_cora_data(f):
     print("Loading data")
     df = pd.read_csv(f, nrows=args.n)
-    with multiprocessing.Pool(processes=16) as pool:
+    with multiprocessing.Pool(processes=12) as pool:
         graphs = pool.map(poolapply, df.values)
     print("done")
     graphs = list(filter(lambda x: x is not None, graphs))
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     net = GAT(133, 14).to(dev)
 
     # create optimizer
-    optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+    optimizer = torch.optim.Adam(net.parameters(), lr=3e-5)
 
     # main loop
     dur = []
