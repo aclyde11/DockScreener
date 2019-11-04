@@ -18,6 +18,8 @@ from utils import Avg, MetricCollector
 def poolapply(i):
     try:
         print(i)
+        if i[0] == 'CCC[C@@H]1C[C@H](C(=O)Nc2cccc(OCC(=O)N(C)C)c2)CCO1':
+            return None
         x = i[0]
         y = i[1]
         return (featmaker.get_dgl_graph(x),
