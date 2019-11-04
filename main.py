@@ -76,7 +76,7 @@ if __name__ == '__main__':
         net.eval()
         with torch.no_grad():
             test_avg = Avg()
-            r2= MetricCollector
+            r2= MetricCollector()
             for g, v in test_loader:
                 v = v.to(dev)
                 v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
