@@ -79,5 +79,5 @@ if __name__ == '__main__':
             v = v.to(dev)
             v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
             loss = F.mse_loss(v, v_pred)
-            test_avg(loss.item)
+            test_avg(loss.item())
         print("epoch", epoch, "test loss", test_avg.avg())
