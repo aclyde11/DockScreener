@@ -24,7 +24,7 @@ class GAT(nn.Module):
         # self.pooling = dgl.nn.pytorch.glob.MaxPooling()
 
         self.gate_nn = nn.Sequential(
-            nn.Linear(32, 32)
+            nn.Linear(out_feats, 1)
         )
         self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
 
