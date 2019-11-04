@@ -27,8 +27,10 @@ def poolapply(i):
 def load_cora_data(f):
     print("Loading data")
     df = pd.read_csv(f)
+    pairs = map(lambda x : (str(x[0]), float(x[1])), df.itertuples(index=False))
+
     with multiprocessing.Pool(processes=12) as pool:
-        graphs = pool.map(poolapply, df.values)
+        graphs = list(tqdm(pool.imap_unordered(poolapply, pairs)))
     print("done")
     graphs = list(filter(lambda x: x is not None or x[0] is not None, graphs))
     return graphs
