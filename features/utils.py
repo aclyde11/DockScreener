@@ -133,7 +133,8 @@ def get_dgl_graph(smiles):
 
     # Convert smiles to molecule
     mol = Chem.MolFromSmiles(smiles)
-
+    if mol is None:
+        return None
     # fake the number of "atoms" if we are collapsing substructures
     n_atoms = mol.GetNumAtoms()
 

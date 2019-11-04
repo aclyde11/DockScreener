@@ -30,7 +30,7 @@ def load_cora_data(f):
     with multiprocessing.Pool(processes=12) as pool:
         graphs = pool.map(poolapply, df.values)
     print("done")
-    graphs = list(filter(lambda x: x is not None, graphs))
+    graphs = list(filter(lambda x: x is not None or x[0] is not None, graphs))
     return graphs
 
 
