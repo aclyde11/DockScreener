@@ -21,7 +21,7 @@ def poolapply(i):
         y = i[1]
         g  = featmaker.get_dgl_graph(x)
         t = np.array([y]).reshape((1, 1))
-        return t,g
+        return g,t
     except:
         return None
 
