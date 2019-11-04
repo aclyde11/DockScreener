@@ -1,5 +1,4 @@
 import sys
-sys.settrace()
 import time
 
 import numpy as np
