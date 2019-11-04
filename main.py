@@ -27,9 +27,9 @@ def poolapply(i):
         print("doneg")
         t = np.array([y]).reshape((1, 1))
         print("done t")
-        return g,t
+        return t
     except:
-        return None, None
+        return None
 
 
 def load_cora_data(f):
