@@ -13,7 +13,7 @@ from models.GAT import GAT
 from tqdm import tqdm
 import argparse
 from utils import Avg, MetricCollector
-
+import pickle
 
 def poolapply(i):
     try:
@@ -28,7 +28,7 @@ def poolapply(i):
 
 def load_cora_data(f):
     print("Loading data")
-    df = pd.read_csv(f)
+    df = pd.read_csv(f, nrows=100)
     pairs = map(lambda x : (str(x[0]), float(x[1])), df.itertuples(index=False))
 
     # with multiprocessing.Pool(processes=1) as pool:
@@ -51,9 +51,13 @@ if __name__ == '__main__':
     BATCH_SIZE = args.b
 
     g = datasets.GraphDataset(load_cora_data(args.i))
+    with open("train_data.pkl", 'wb') as f:
+        pickle.dump(g, f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     g = datasets.GraphDataset(load_cora_data(args.e))
+    with open("test_data.pkl", 'wb') as f:
+        pickle.dump(g, f)
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14).to(dev)

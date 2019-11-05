@@ -18,4 +18,4 @@ def graph_collate(x):
     g, v = zip(*x)
     batch_graph = dgl.batch(g)
     batch_values = torch.stack(v, dim=0)
-    return batch_graph, batch_values.view(len(g), 1)
+    return batch_graph, batch_values.view(len(g), 1).float()
