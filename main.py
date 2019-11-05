@@ -26,9 +26,12 @@ def poolapply(i):
         return None
 
 
-def load_cora_data(f):
+def load_cora_data(f, size=None):
     print("Loading data")
-    df = pd.read_csv(f, nrows=100)
+    kwargs = {}
+    if size is not None:
+        kwargs['nrows'] = size
+    df = pd.read_csv(f, **kwargs)
     pairs = map(lambda x : (str(x[0]), float(x[1])), df.itertuples(index=False))
 
     # with multiprocessing.Pool(processes=1) as pool:
@@ -50,7 +53,7 @@ if __name__ == '__main__':
     print(dev)
     BATCH_SIZE = args.b
 
-    g = datasets.GraphDataset(load_cora_data(args.i))
+    g = datasets.GraphDataset(load_cora_data(args.i, size=250000))
     with open("train_data.pkl", 'wb') as f:
         pickle.dump(g, f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
