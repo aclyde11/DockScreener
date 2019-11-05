@@ -56,41 +56,41 @@ if __name__ == '__main__':
     print(dev)
     BATCH_SIZE = args.b
 
-    # g = datasets.GraphDataset(load_cora_data(args.i, size=250000))
-    with open("train_data.pkl", 'rb') as f:
-        # pickle.dump(g, f)
-        g = pickle.load(f)
-    train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
-
-    # g = datasets.GraphDataset(load_cora_data(args.e))
-    with open("test_data.pkl", 'rb') as f:
-        # pickle.dump(g, f)
-        g = pickle.load(f)
+    # # g = datasets.GraphDataset(load_cora_data(args.i, size=250000))
+    # with open("train_data.pkl", 'rb') as f:
+    #     # pickle.dump(g, f)
+    #     g = pickle.load(f)
+    # train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
+    #
+    g = datasets.GraphDataset(load_cora_data(args.e))
+    # with open("test_data.pkl", 'rb') as f:
+    #     # pickle.dump(g, f)
+    #     g = pickle.load(f)
 
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14).to(dev)
 
     # create optimizer
-    optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
-
+    # optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
+    net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
-    for epoch in range(30):
-        net.train()
-        train_avg = Avg()
-        for g, v in tqdm(train_loader):
-            if epoch >= 3:
-                t0 = time.time()
-            v = v.to(dev)
-            v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            loss = F.mse_loss(v, v_pred)
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            train_avg(loss.item())
-        print("epoch", epoch, "train loss", train_avg.avg())
-        torch.save( net.state_dict(), 'model.pt')
+    for epoch in range(1):
+        # net.train()
+        # train_avg = Avg()
+        # for g, v in tqdm(train_loader):
+        #     if epoch >= 3:
+        #         t0 = time.time()
+        #     v = v.to(dev)
+        #     v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+        #     loss = F.mse_loss(v, v_pred)
+        #     optimizer.zero_grad()
+        #     loss.backward()
+        #     optimizer.step()
+        #     train_avg(loss.item())
+        # print("epoch", epoch, "train loss", train_avg.avg())
+        # torch.save( net.state_dict(), 'model.pt')
         net.eval()
         with torch.no_grad():
             test_avg = Avg()
