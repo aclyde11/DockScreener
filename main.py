@@ -15,6 +15,9 @@ import argparse
 from utils import Avg, MetricCollector
 import pickle
 
+import torch.backends.cudnn
+torch.backends.cudnn.benchmark = True
+
 def poolapply(i):
     try:
         x = i[0]
