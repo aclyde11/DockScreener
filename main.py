@@ -69,7 +69,7 @@ if __name__ == '__main__':
     net = GAT(133, 14).to(dev)
 
     # create optimizer
-    optimizer = torch.optim.Adam(net.parameters(), lr=3e-5)
+    optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
 
     # main loop
     dur = []
