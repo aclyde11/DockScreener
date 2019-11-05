@@ -53,11 +53,10 @@ if __name__ == '__main__':
     print(dev)
     BATCH_SIZE = args.b
 
-    g = datasets.GraphDataset(load_cora_data(args.i, size=250000))
-    with open("train_data.pkl", 'wb') as f:
-        pickle.dump(g, f)
-        # g = pickle.load(f)
-    exit()
+    # g = datasets.GraphDataset(load_cora_data(args.i, size=250000))
+    with open("train_data.pkl", 'rb') as f:
+        # pickle.dump(g, f)
+        g = pickle.load(f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     # g = datasets.GraphDataset(load_cora_data(args.e))
