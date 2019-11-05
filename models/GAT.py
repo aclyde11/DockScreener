@@ -9,7 +9,7 @@ class GAT(nn.Module):
         super(GAT, self).__init__()
         in_feats = in_dim
         out_feats = 32
-        self.edge_layer = nn.Linear(out_feats, out_feats * out_feats)
+        self.edge_layer = nn.Linear(edge_feats, edge_feats * out_feats)
 
         self.conv1 = dgl.nn.pytorch.conv.SAGEConv(
             in_feats=in_feats,
@@ -38,6 +38,7 @@ class GAT(nn.Module):
 
     def forward(self, g, n, e):
         h = self.conv1(g,n)
+        print(h.shape)
         h = F.relu(h)
         h = self.conv2(g,h,e)
         h = self.pooling(g,h)
