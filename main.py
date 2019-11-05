@@ -87,7 +87,7 @@ if __name__ == '__main__':
             optimizer.step()
             train_avg(loss.item())
         print("epoch", epoch, "train loss", train_avg.avg())
-        torch.save('model.pt', net.state_dict())
+        torch.save( net.state_dict(), 'model.pt')
         net.eval()
         with torch.no_grad():
             test_avg = Avg()
