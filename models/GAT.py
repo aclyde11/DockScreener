@@ -38,7 +38,6 @@ class GAT(nn.Module):
 
     def forward(self, g, n, e):
         h = self.conv1(g,n)
-        print(h.shape)
         h = F.relu(h)
         h = self.conv2(g,h,e)
         h = self.pooling(g,h)
