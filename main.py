@@ -102,4 +102,7 @@ if __name__ == '__main__':
                 test_avg(loss.item())
                 r2(v, v_pred)
             print("epoch", epoch, "test loss", test_avg.avg(), r2.r2())
-
+            preds = np.array(r2.preds, dtype=np.float32)
+            trues = np.array(r2.trues, dtype=np.float32)
+            out = np.stack([preds, trues]).astype(np.float16)
+            np.save("out_test.npy",  out)
