@@ -14,7 +14,7 @@ from tqdm import tqdm
 import argparse
 from utils import Avg, MetricCollector
 import pickle
-
+import math
 import torch.backends.cudnn
 torch.backends.cudnn.benchmark = True
 
@@ -44,6 +44,43 @@ def load_cora_data(f, size=None):
     graphs = list(filter(lambda x: x is not None or x[0] is not None, graphs))
     return graphs
 
+def find_lr(init_value = 1e-8, final_value=10., beta = 0.98):
+    num = len(train_loader)-1
+    mult = (final_value / init_value) ** (1/num)
+    lr = init_value
+    optimizer.param_groups[0]['lr'] = lr
+    avg_loss = 0.
+    best_loss = 0.
+    batch_num = 0
+    losses = []
+    log_lrs = []
+    for data in train_loader:
+        batch_num += 1
+        #As before, get the loss for this mini-batch of inputs/outputs
+        inputs,labels = data
+        inputs, labels = torch.autograd.Variable(inputs), torch.autograd.Variable(labels)
+        optimizer.zero_grad()
+        outputs = net(inputs)
+        loss = F.mse_loss(outputs, labels)
+        #Compute the smoothed loss
+        avg_loss = beta * avg_loss + (1-beta) *loss.data[0]
+        smoothed_loss = avg_loss / (1 - beta**batch_num)
+        #Stop if the loss is exploding
+        if batch_num > 1 and smoothed_loss > 4 * best_loss:
+            return log_lrs, losses
+        #Record the best loss
+        if smoothed_loss < best_loss or batch_num==1:
+            best_loss = smoothed_loss
+        #Store the values
+        losses.append(smoothed_loss)
+        log_lrs.append(math.log10(lr))
+        #Do the SGD step
+        loss.backward()
+        optimizer.step()
+        #Update the lr for the next step
+        lr *= mult
+        optimizer.param_groups[0]['lr'] = lr
+    return log_lrs, losses
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -57,40 +94,46 @@ if __name__ == '__main__':
     BATCH_SIZE = args.b
 
     # # g = datasets.GraphDataset(load_cora_data(args.i, size=250000))
-    # with open("train_data.pkl", 'rb') as f:
+    with open("train_data.pkl", 'rb') as f:
     #     # pickle.dump(g, f)
-    #     g = pickle.load(f)
-    # train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
+        g = pickle.load(f)
+    train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
     #
-    g = datasets.GraphDataset(load_cora_data(args.e))
-    with open("val_data.pkl", 'wb') as f:
-        pickle.dump(g, f)
-        # g = pickle.load(f)
+    # g = datasets.GraphDataset(load_cora_data(args.e))
+    with open("test_data.pkl", 'rb') as f:
+        # pickle.dump(g, f)
+        g = pickle.load(f)
 
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14).to(dev)
+    print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
-    # optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
+    optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.94)
     net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
-    for epoch in range(1):
-        # net.train()
-        # train_avg = Avg()
-        # for g, v in tqdm(train_loader):
-        #     if epoch >= 3:
-        #         t0 = time.time()
-        #     v = v.to(dev)
-        #     v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-        #     loss = F.mse_loss(v, v_pred)
-        #     optimizer.zero_grad()
-        #     loss.backward()
-        #     optimizer.step()
-        #     train_avg(loss.item())
-        # print("epoch", epoch, "train loss", train_avg.avg())
-        # torch.save( net.state_dict(), 'model.pt')
+    for epoch in range(50):
+        net.train()
+        train_avg = Avg()
+        for g, v in tqdm(train_loader):
+            if epoch >= 3:
+                t0 = time.time()
+            v = v.to(dev)
+            v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+            loss = F.mse_loss(v, v_pred)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            train_avg(loss.item())
+        print("Upading learning rate")
+        for g in optimizer.param_groups:
+            g['lr'] +=  0.006 if epoch < 15 else -0.006
+            g['momentum'] -= 0.005 if epoch <15 else -0.002
+
+        print("epoch", epoch, "train loss", train_avg.avg())
+        torch.save( net.state_dict(), 'model.pt')
         net.eval()
         with torch.no_grad():
             test_avg = Avg()
