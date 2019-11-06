@@ -28,6 +28,12 @@ def poolapply(i):
     except:
         return None
 
+def get_mom(epoch):
+    if epoch < 15:
+        return 0.005
+    if epoch > 15 and epoch < 25:
+        return  -0.005
+    return 0
 
 def load_cora_data(f, size=None):
     print("Loading data")
@@ -130,7 +136,7 @@ if __name__ == '__main__':
         print("Upading learning rate")
         for g in optimizer.param_groups:
             g['lr'] +=  0.006 if epoch < 15 else -0.006
-            g['momentum'] -= 0.005 if epoch <15 else -0.002
+            g['momentum'] -= get_mom(epoch)
 
         print("epoch", epoch, "train loss", train_avg.avg())
         torch.save( net.state_dict(), 'model.pt')

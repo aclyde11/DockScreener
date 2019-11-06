@@ -27,11 +27,23 @@ class GAT(nn.Module):
             out_feats=out_feats,
             aggregator_type='lstm')
 
-        self.conv2 = dgl.nn.pytorch.conv.NNConv(
+
+        self.conv2 = dgl.nn.pytorch.conv.SAGEConv(
+            in_feats=out_feats,
+            out_feats=out_feats,
+            aggregator_type='lstm')
+
+
+        self.conv3 = dgl.nn.pytorch.conv.NNConv(
             in_feats=out_feats,
             out_feats=out_feats,
             edge_func=self.edge_layer,
             aggregator_type='sum')
+
+        self.conv4 = self.conv2 = dgl.nn.pytorch.conv.SAGEConv(
+            in_feats=out_feats,
+            out_feats=out_feats,
+            aggregator_type='lstm')
 
         self.final_layer = nn.Sequential(
             nn.Linear(out_feats, 32),
@@ -40,12 +52,14 @@ class GAT(nn.Module):
             nn.ReLU(),
             nn.Linear(32,1)
         )
-        self.pooling = dgl.nn.pytorch.glob.MaxPooling()
+        # self.pooling = dgl.nn.pytorch.glob.MaxPooling()
 
-        # self.gate_nn = nn.Sequential(
-        #     nn.Linear(out_feats, 1)
-        # )
-        # self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
+        self.gate_nn = nn.Sequential(
+            nn.Linear(out_feats, 16),
+            nn.ReLU(),
+            nn.Linear(16,1)
+        )
+        self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
 
 
     '''
@@ -56,8 +70,13 @@ class GAT(nn.Module):
     def forward(self, g, n, e):
         h = self.conv1(g,n)   # returns [nodes, out_features]
         h = F.relu(h)
-        h = self.conv2(g,h,e) # returns [nodes, out_features]
+        h = self.conv2(g,h)   # returns [nodes, out_features]
+        h = F.relu(h)
+        h = self.conv3(g,h,e) # returns [nodes, out_features]
+        h = F.relu(h)
+        h = self.conv4(g,h)   # returns [nodes, out_features]
         h = self.pooling(g,h) # returns [batch, out_features]
+
         h = F.elu(h)
         h = self.final_layer(h) #[batch, 1]
         return h
