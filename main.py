@@ -117,7 +117,7 @@ if __name__ == '__main__':
 
     # create optimizer
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.94)
-    net.load_state_dict(torch.load("model.pt"))
+    # net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
     for epoch in range(50):
