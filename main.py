@@ -116,7 +116,7 @@ if __name__ == '__main__':
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.01, momentum=0.94)
+    optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
     # net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
@@ -133,10 +133,10 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
             train_avg(loss.item())
-        print("Upading learning rate")
-        for g in optimizer.param_groups:
-            g['lr'] +=  min(1e-1,max(1e-6, 0.006 if epoch < 15 else -0.006))
-            g['momentum'] -= get_mom(epoch)
+        # print("Upading learning rate")
+        # for g in optimizer.param_groups:
+        #     g['lr'] +=  min(1e-1,max(1e-6, 0.006 if epoch < 15 else -0.006))
+        #     g['momentum'] -= get_mom(epoch)
 
         print("epoch", epoch, "train loss", train_avg.avg())
         torch.save( net.state_dict(), 'model.pt')
