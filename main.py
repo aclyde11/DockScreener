@@ -114,8 +114,8 @@ if __name__ == '__main__':
     good_values = np.where(values < good_values)
     print(good_values)
     values = []
-    for i in good_values:
-        values.append(int(g[i]))
+    for i in good_values[0]:
+        values.append(g[i])
 
     g_good = datasets.GraphDataset(values)
     train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
