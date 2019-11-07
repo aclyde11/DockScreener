@@ -120,6 +120,8 @@ if __name__ == '__main__':
     # net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
+
+    lossf = lambda p: torch.norm(p, p=6, dim=-1)
     for epoch in range(50):
         net.train()
         train_avg = Avg()
@@ -128,7 +130,7 @@ if __name__ == '__main__':
                 t0 = time.time()
             v = v.to(dev)
             v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            loss = torch.norm((v-v_pred).flatten(), p=6, dim=-1)
+            loss = lossf((v-v_pred).flatten())
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -147,7 +149,7 @@ if __name__ == '__main__':
             for g, v in test_loader:
                 v = v.to(dev)
                 v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-                loss = F.mse_loss(v, v_pred)
+                loss = lossf((v-v_pred).flatten())
                 test_avg(loss.item())
                 r2(v, v_pred)
             print("epoch", epoch, "test loss", test_avg.avg(), r2.r2())
