@@ -177,7 +177,7 @@ if __name__ == '__main__':
             for g, v in test_loader:
                 v = v.to(dev)
                 v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-                loss = lossf((v-v_pred).flatten())
+                loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
             print("epoch", epoch, "test loss", test_avg.avg(), r2.r2())
