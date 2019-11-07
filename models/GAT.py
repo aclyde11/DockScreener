@@ -46,18 +46,16 @@ class GAT(nn.Module):
             aggregator_type='lstm')
 
         self.final_layer = nn.Sequential(
-            nn.Linear(out_feats, 32),
+            nn.Linear(out_feats, 64),
             nn.ReLU(),
-            nn.Linear(32,32),
+            nn.Linear(64,32),
             nn.ReLU(),
             nn.Linear(32,1)
         )
         # self.pooling = dgl.nn.pytorch.glob.MaxPooling()
 
         self.gate_nn = nn.Sequential(
-            nn.Linear(out_feats, 16),
-            nn.ReLU(),
-            nn.Linear(16,1)
+            nn.Linear(out_feats, 1)
         )
         self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
 

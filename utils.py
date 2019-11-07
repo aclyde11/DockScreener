@@ -26,4 +26,7 @@ class MetricCollector:
 
 
     def r2(self):
-        return metrics.r2_score(self.trues, self.preds)
+        try:
+            return metrics.r2_score(self.trues, self.preds)
+        except:
+            return -1

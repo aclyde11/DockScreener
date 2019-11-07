@@ -135,7 +135,7 @@ if __name__ == '__main__':
             train_avg(loss.item())
         print("Upading learning rate")
         for g in optimizer.param_groups:
-            g['lr'] +=  0.006 if epoch < 15 else -0.006
+            g['lr'] +=  min(1e-1,max(1e-6, 0.006 if epoch < 15 else -0.006))
             g['momentum'] -= get_mom(epoch)
 
         print("epoch", epoch, "train loss", train_avg.avg())
