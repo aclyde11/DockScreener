@@ -128,7 +128,7 @@ if __name__ == '__main__':
                 t0 = time.time()
             v = v.to(dev)
             v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            loss = torch.norm((v-v_pred).flatten(), p=float('inf'), dim=-1)
+            loss = torch.norm((v-v_pred).flatten(), p=6, dim=-1)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
