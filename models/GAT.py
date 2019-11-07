@@ -80,7 +80,8 @@ class GAT(nn.Module):
 
         h1 = self.pooling(g,h) # returns [batch, out_features]
         h2 = self.pooling2(g,h)
-        h = torch.cat([h1,h2])
+        h = torch.cat([h1,h2], dim=-1)
+
         h = F.elu(h)
         h = self.final_layer(h) #[batch, 1]
         return h
