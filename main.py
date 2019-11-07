@@ -155,6 +155,9 @@ if __name__ == '__main__':
                 train_avg(loss.item())
 
         else:
+            if epoch == 10:
+                optimizer = torch.optim.SGD(net.parameters(), lr=1e-5)
+
             for g in optimizer.param_groups:
                 g['lr'] += 1e-5
             for g, v in tqdm(train_best_loader):
