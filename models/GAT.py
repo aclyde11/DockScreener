@@ -19,7 +19,7 @@ class GAT(nn.Module):
     def __init__(self, in_dim, edge_feats):
         super(GAT, self).__init__()
         in_feats = in_dim
-        out_feats = 128
+        out_feats = 64
         self.edge_layer = nn.Linear(edge_feats, out_feats * out_feats)
 
         self.conv1 = dgl.nn.pytorch.conv.SAGEConv(
@@ -69,13 +69,13 @@ class GAT(nn.Module):
         h = self.conv1(g,n)   # returns [nodes, out_features]
         h = F.dropout(h, 0.05)
         h = F.relu(h)
-        h = F.dropout(h, 0.1)
+        h = F.dropout(h, 0.05)
         h = self.conv2(g,h)   # returns [nodes, out_features]
         h = F.relu(h)
-        h = F.dropout(h, 0.1)
+        h = F.dropout(h, 0.05)
         h = self.conv3(g,h,e) # returns [nodes, out_features]
         h = F.relu(h)
-        h = F.dropout(h, 0.1)
+        h = F.dropout(h, 0.05)
         h = self.conv4(g,h)   # returns [nodes, out_features]
 
         h1 = self.pooling(g,h) # returns [batch, out_features]
