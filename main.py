@@ -104,6 +104,23 @@ if __name__ == '__main__':
     #     # pickle.dump(g, f)
         g = pickle.load(f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
+
+    print("getting top 10% values")
+    values = []
+    for i in range(len(g)):
+        values.append(g[i][1])
+    values = np.array(values)
+    good_values = np.quantile(values, 0.1)
+    good_values = np.where(values < good_values)
+
+    values = []
+    for i in good_values:
+        values.append(g[i])
+
+    g_good = datasets.GraphDataset(values)
+    train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
+
+
     #
     # g = datasets.GraphDataset(load_cora_data(args.e))
     with open("test_data.pkl", 'rb') as f:
@@ -121,24 +138,35 @@ if __name__ == '__main__':
     # main loop
     dur = []
 
-    lossf = lambda p: torch.norm(p, p=3, dim=-1)
+    lossf = F.mse_loss()
     for epoch in range(50):
         net.train()
         train_avg = Avg()
-        for g, v in tqdm(train_loader):
-            if epoch >= 3:
-                t0 = time.time()
-            v = v.to(dev)
-            v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            loss = lossf((v-v_pred).flatten())
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            train_avg(loss.item())
-        # print("Upading learning rate")
-        # for g in optimizer.param_groups:
-        #     g['lr'] +=  min(1e-1,max(1e-6, 0.006 if epoch < 15 else -0.006))
-        #     g['momentum'] -= get_mom(epoch)
+        if epoch < 10:
+            for g, v in tqdm(train_loader):
+                if epoch >= 3:
+                    t0 = time.time()
+                v = v.to(dev)
+                v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                loss = lossf((v-v_pred).flatten())
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                train_avg(loss.item())
+
+        else:
+            for g in optimizer.param_groups:
+                g['lr'] += 1e-5
+            for g, v in tqdm(train_best_loader):
+                if epoch >= 3:
+                    t0 = time.time()
+                v = v.to(dev)
+                v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                loss = lossf((v-v_pred).flatten())
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                train_avg(loss.item())
 
         print("epoch", epoch, "train loss", train_avg.avg())
         torch.save( net.state_dict(), 'model.pt')
