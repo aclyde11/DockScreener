@@ -121,7 +121,7 @@ if __name__ == '__main__':
     # main loop
     dur = []
 
-    lossf = lambda p: torch.norm(p, p=6, dim=-1)
+    lossf = lambda p: torch.norm(p, p=3, dim=-1)
     for epoch in range(50):
         net.train()
         train_avg = Avg()
