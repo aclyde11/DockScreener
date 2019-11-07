@@ -1,7 +1,7 @@
 import dgl
 import torch
 from torch.utils.data import DataLoader, Dataset
-
+import numpy as np
 
 class GraphDataset(Dataset):
     def __init__(self, g):
@@ -9,7 +9,11 @@ class GraphDataset(Dataset):
         assert (len(self.graphs) == len(self.values))
 
     def __getitem__(self, item):
-        return self.graphs[item], torch.from_numpy(self.values[item])
+        if isinstance(self.values[item], np.ndarray):
+            return self.graphs[item], torch.from_numpy(self.values[item])
+        else:
+            return self.graphs[item], self.values[item]
+
 
     def __len__(self):
         return len(self.graphs)
