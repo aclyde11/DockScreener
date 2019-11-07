@@ -138,7 +138,7 @@ if __name__ == '__main__':
     # main loop
     dur = []
 
-    lossf = F.mse_loss()
+    lossf = F.mse_loss
     for epoch in range(50):
         net.train()
         train_avg = Avg()
