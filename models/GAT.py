@@ -37,10 +37,10 @@ class GAT_small(nn.Module):
             nn.BatchNorm1d(out_feats * 2 + prev_out),
             nn.Linear(out_feats * 2 + prev_out, 32),
             nn.ReLU(),
-            nn.Dropout(0.02),
+            nn.Dropout(0.05),
             nn.Linear(32,32),
             nn.ReLU(),
-            nn.Dropout(0.02),
+            nn.Dropout(0.05),
             nn.Linear(32,1)
         )
         self.pooling2 = dgl.nn.pytorch.glob.MaxPooling()
@@ -83,10 +83,6 @@ class GAT(nn.Module):
             aggregator_type='lstm')
 
 
-        self.conv2 = dgl.nn.pytorch.conv.SAGEConv(
-            in_feats=out_feats,
-            out_feats=out_feats,
-            aggregator_type='lstm')
 
 
         self.conv3 = dgl.nn.pytorch.conv.NNConv(
@@ -104,10 +100,10 @@ class GAT(nn.Module):
             nn.BatchNorm1d(out_feats * 2),
             nn.Linear(out_feats * 2, 64),
             nn.ReLU(),
-            nn.Dropout(0.02),
+            nn.Dropout(0.05),
             nn.Linear(64,32),
             nn.ReLU(),
-            nn.Dropout(0.02),
+            nn.Dropout(0.05),
             nn.Linear(32,1)
         )
         self.pooling2 = dgl.nn.pytorch.glob.MaxPooling()
@@ -129,8 +125,8 @@ class GAT(nn.Module):
     def forward(self, g, n, e, return_fp = True):
         h = self.conv1(g,n)   # returns [nodes, out_features]
         h = F.elu(h)
-        h = self.conv2(g,h)   # returns [nodes, out_features]
-        h = F.elu(h)
+        # h = self.conv2(g,h)   # returns [nodes, out_features]
+        # h = F.elu(h)
         h = self.conv3(g,h,e) # returns [nodes, out_features]
         h = F.elu(h)
         h = self.conv4(g,h)   # returns [nodes, out_features]
