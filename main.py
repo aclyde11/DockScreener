@@ -202,9 +202,9 @@ if __name__ == '__main__':
                 v_pred  = v_pred.view(v.shape[0], -1)
                 v_small =  v_small.view(v.shape[0], -1)
 
-                print("s1", (v_small * (v_pred <= good_values)).shape)
-                print("s2", torch.dot(v_small , (v_pred <= good_values)))
-                v_pred = v_small * (v_pred <= good_values) + v_pred * (v_pred > good_values)
+                print("s1", (v_small * (v_pred <= good_values).float()).shape)
+                print("s2", torch.dot(v_small , (v_pred <= good_values).float()))
+                v_pred = v_small * (v_pred <= good_values).float() + v_pred * (v_pred > good_values).float()
                 print("v_pred shape", v_pred.shape)
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
