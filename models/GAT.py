@@ -118,7 +118,7 @@ class GAT(nn.Module):
         )
         self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
 
-        self.gat_small = GAT_small(in_dim, edge_feats, out_feats)
+        self.gat_small = GAT_small(in_dim, edge_feats, out_feats * 2)
 
 
     '''
@@ -145,7 +145,7 @@ class GAT(nn.Module):
         mask = h_out < self.g
         # h_small = h_out * mask
 
-        h_small = self.gat_small(g, n , e, h_out)
+        h_small = self.gat_small(g, n , e, p)
 
         return h, h_small, mask
 
