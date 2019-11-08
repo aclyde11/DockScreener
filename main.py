@@ -190,6 +190,9 @@ if __name__ == '__main__':
             for g, v in test_loader:
                 v = v.to(dev)
                 v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                v_pred  = v_pred.view(v.shape[0], -1)
+                v_small =  v_small.view(v.shape[0], -1)
+
                 v_pred = v_small * (v_pred <= good_values) + v_pred * (v_pred > good_values)
 
                 loss = lossf(v,v_pred).mean()
