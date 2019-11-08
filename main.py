@@ -150,6 +150,8 @@ if __name__ == '__main__':
         train_avg = Avg()
         if epoch < 10:
             for g, v in tqdm(train_loader):
+                break
+
                 if epoch >= 3:
                     t0 = time.time()
                 v = v.to(dev)
@@ -201,8 +203,10 @@ if __name__ == '__main__':
                 v_pred  = v_pred.view(v.shape[0], -1)
                 v_small =  v_small.view(v.shape[0], -1)
 
+                print("s1", (v_small * (v_pred <= good_values)).shape)
+                print("s2", torch.dot(v_small , (v_pred <= good_values)))
                 v_pred = v_small * (v_pred <= good_values) + v_pred * (v_pred > good_values)
-
+                print("v_pred shape", v_pred.shape)
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
