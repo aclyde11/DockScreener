@@ -120,7 +120,7 @@ if __name__ == '__main__':
     for i in good_values[0]:
         values.append(g[i])
 
-    good_values= torch.from_numpy(good_values[0]).float().flatten()
+    good_values= torch.from_numpy(good_values[0]).float().flatten().to(dev)
 
     g_good = datasets.GraphDataset(values)
     train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
