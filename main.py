@@ -155,6 +155,9 @@ if __name__ == '__main__':
                 v = v.to(dev)
                 v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
 
+                v = v.view(v.shape[0], -1)
+                v_pred = v_pred.view(v.shape[0], -1)
+                v_small = v_small.view(v.shape[0], -1)
                 loss_h = second_lossf(v, v_small) * (v <= good_values)
                 loss = lossf(v, v_pred).mean() + 0.5 * loss_h.mean()
                 optimizer.zero_grad()
@@ -174,6 +177,9 @@ if __name__ == '__main__':
                 v = v.to(dev)
                 v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
 
+                v = v.view(v.shape[0], -1)
+                v_pred = v_pred.view(v.shape[0], -1)
+                v_small = v_small.view(v.shape[0], -1)
                 loss_h = second_lossf(v, v_small) * (v <= good_values)
                 loss = lossf(v, v_pred).mean() + 0.5 * loss_h.mean()
                 optimizer.zero_grad()
@@ -190,6 +196,8 @@ if __name__ == '__main__':
             for g, v in test_loader:
                 v = v.to(dev)
                 v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+
+                v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)
                 v_small =  v_small.view(v.shape[0], -1)
 
