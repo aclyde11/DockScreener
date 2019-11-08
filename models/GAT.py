@@ -46,15 +46,19 @@ class GAT(nn.Module):
             aggregator_type='lstm')
 
         self.final_layer = nn.Sequential(
+            nn.BatchNorm1d(out_feats * 2),
             nn.Linear(out_feats * 2, 64),
             nn.ReLU(),
+            nn.Dropout(0.02),
             nn.Linear(64,32),
             nn.ReLU(),
+            nn.Dropout(0.02),
             nn.Linear(32,1)
         )
         self.pooling2 = dgl.nn.pytorch.glob.MaxPooling()
 
         self.gate_nn = nn.Sequential(
+            nn.BatchNorm1d(out_feats),
             nn.Linear(out_feats, 1)
         )
         self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
@@ -67,15 +71,11 @@ class GAT(nn.Module):
     '''
     def forward(self, g, n, e):
         h = self.conv1(g,n)   # returns [nodes, out_features]
-        h = F.dropout(h, 0.05)
-        h = F.relu(h)
-        h = F.dropout(h, 0.05)
+        h = F.elu(h)
         h = self.conv2(g,h)   # returns [nodes, out_features]
-        h = F.relu(h)
-        h = F.dropout(h, 0.05)
+        h = F.elu(h)
         h = self.conv3(g,h,e) # returns [nodes, out_features]
-        h = F.relu(h)
-        h = F.dropout(h, 0.05)
+        h = F.elu(h)
         h = self.conv4(g,h)   # returns [nodes, out_features]
 
         h1 = self.pooling(g,h) # returns [batch, out_features]
