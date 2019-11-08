@@ -113,6 +113,8 @@ if __name__ == '__main__':
         values.append(g[i][1])
     values = np.array(values)
     good_values = np.quantile(values, 0.1)
+    good_values_tensor = torch.from_numpy(good_values).float().flatten().to(dev)
+
     print("1%", good_values)
     good_values = np.where(values < good_values)
     print(good_values)
@@ -120,7 +122,6 @@ if __name__ == '__main__':
     for i in good_values[0]:
         values.append(g[i])
 
-    good_values= torch.from_numpy(good_values[0]).float().flatten().to(dev)
 
     g_good = datasets.GraphDataset(values)
     train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
@@ -202,9 +203,8 @@ if __name__ == '__main__':
                 v_pred  = v_pred.view(v.shape[0], -1)
                 v_small =  v_small.view(v.shape[0], -1)
 
-                print("s1", (v_small * (v_pred <= good_values).float()).shape)
-                print("s2", torch.dot(v_small , (v_pred <= good_values).float()))
-                v_pred = v_small * (v_pred <= good_values).float() + v_pred * (v_pred > good_values).float()
+                print("s1", (v_small * (v_pred <= good_values_tensor).float()).shape)
+                v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
                 print("v_pred shape", v_pred.shape)
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
