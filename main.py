@@ -115,7 +115,7 @@ if __name__ == '__main__':
     good_values = np.quantile(values, 0.1)
     good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
     print(good_values_tensor)
-    exit()
+
     print("1%", good_values)
     good_values = np.where(values < good_values)
     print(good_values)
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    net = GAT(133, 14, good_value=good_values).to(dev)
+    net = GAT(133, 14, good_value=good_values_tensor).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
