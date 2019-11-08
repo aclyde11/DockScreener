@@ -154,8 +154,8 @@ if __name__ == '__main__':
                     t0 = time.time()
                 v = v.to(dev)
                 v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                print(v_pred.shape, v_small, v.shape)
 
-                v = v.view(v.shape[0], -1)
                 v_pred = v_pred.view(v.shape[0], -1)
                 v_small = v_small.view(v.shape[0], -1)
                 loss_h = second_lossf(v, v_small) * (v <= good_values)
