@@ -60,7 +60,7 @@ class GAT_small(nn.Module):
     def forward(self, g, n, e, p):
         h = self.conv1(g,n)   # returns [nodes, out_features]
         h = F.elu(h)
-        h = self.conv2(g,h)   # returns [nodes, out_features]
+        h = self.conv2(g,h,e)   # returns [nodes, out_features]
         h1 = self.pooling(g,h) # returns [batch, out_features]
         h2 = self.pooling2(g,h)
         h = torch.cat([p, h1,h2], dim=-1)
