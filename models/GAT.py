@@ -35,7 +35,7 @@ class GAT_small(nn.Module):
 
         self.final_layer = nn.Sequential(
             nn.BatchNorm1d(out_feats * 2 + prev_out),
-            nn.Linear(out_feats * 2, 32),
+            nn.Linear(out_feats * 2 + prev_out, 32),
             nn.ReLU(),
             nn.Dropout(0.02),
             nn.Linear(32,32),
