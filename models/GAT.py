@@ -25,7 +25,7 @@ class GAT_small(nn.Module):
         self.conv1 = dgl.nn.pytorch.conv.SAGEConv(
             in_feats=in_feats,
             out_feats=out_feats,
-            aggregator_type='gcn')
+            aggregator_type='lstm')
 
         self.conv2 = dgl.nn.pytorch.conv.NNConv(
             in_feats=out_feats,
