@@ -113,7 +113,7 @@ if __name__ == '__main__':
         values.append(g[i][1])
     values = np.array(values)
     good_values = np.quantile(values, 0.1)
-    good_values_tensor = torch.from_numpy(good_values).float().flatten().to(dev)
+    good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
 
     print("1%", good_values)
     good_values = np.where(values < good_values)
