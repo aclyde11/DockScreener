@@ -113,6 +113,7 @@ if __name__ == '__main__':
         values.append(g[i][1])
     values = np.array(values)
     good_values = np.quantile(values, 0.1)
+    print("1%", good_values)
     good_values = np.where(values < good_values)
     print(good_values)
     values = []
@@ -131,7 +132,7 @@ if __name__ == '__main__':
 
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    net = GAT(133, 14).to(dev)
+    net = GAT(133, 14, good_value=good_values).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
@@ -141,6 +142,7 @@ if __name__ == '__main__':
     dur = []
 
     lossf = F.mse_loss
+    second_lossf = torch.nn.MSELoss(reduction='none')
     for epoch in range(50):
         net.train()
         train_avg = Avg()
@@ -149,8 +151,10 @@ if __name__ == '__main__':
                 if epoch >= 3:
                     t0 = time.time()
                 v = v.to(dev)
-                v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-                loss = lossf(v, v_pred).mean()
+                v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+
+                loss_h = second_lossf(v, v_small) * (v <= good_values)
+                loss = lossf(v, v_pred).mean() + 0.5 * loss_h.mean()
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -161,13 +165,15 @@ if __name__ == '__main__':
                 optimizer = torch.optim.SGD(net.parameters(), lr=1e-5)
 
             for g in optimizer.param_groups:
-                g['lr'] += 1e-5
+                g['lr'] += 5e-5
             for g, v in tqdm(train_best_loader):
                 if epoch >= 3:
                     t0 = time.time()
                 v = v.to(dev)
-                v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-                loss = lossf(v, v_pred).mean()
+                v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+
+                loss_h = second_lossf(v, v_small) * (v <= good_values)
+                loss = lossf(v, v_pred).mean() + 0.5 * loss_h.mean()
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -181,7 +187,9 @@ if __name__ == '__main__':
             r2= MetricCollector()
             for g, v in test_loader:
                 v = v.to(dev)
-                v_pred = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                v_pred = v_small * (v_pred <= good_values) + v_pred * (v_pred > good_values)
+
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
