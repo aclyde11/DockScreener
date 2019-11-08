@@ -147,5 +147,5 @@ class GAT(nn.Module):
 
         h_small = self.gat_small(g, n , e, p)
 
-        return h, h_small, mask
+        return h_out, h_small, mask
 
