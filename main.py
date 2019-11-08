@@ -18,6 +18,8 @@ import math
 import torch.backends.cudnn
 torch.backends.cudnn.benchmark = True
 
+
+
 def poolapply(i):
     try:
         x = i[0]
@@ -183,7 +185,7 @@ if __name__ == '__main__':
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
-            print("epoch", epoch, "test loss", test_avg.avg(), r2.r2())
+            print("epoch", epoch, "test loss", test_avg.avg(), r2.r2(), r2.nefr(0.01,0.01))
             preds = np.array(r2.preds, dtype=np.float32)
             trues = np.array(r2.trues, dtype=np.float32)
             out = np.stack([preds, trues]).astype(np.float16)
