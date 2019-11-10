@@ -149,7 +149,7 @@ if __name__ == '__main__':
     dur = []
 
     lossf = F.mse_loss
-    second_lossf = torch.nn.MSELoss(reduction='none')
+    second_lossf = torch.nn.L1Loss(reduction='none')
     for epoch in range(50):
         net.train()
         train_avg = Avg()
@@ -168,9 +168,11 @@ if __name__ == '__main__':
 
             loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
             loss = lossf(v, v_pred).mean()
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+
+            if epoch < 10:
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
             optimizer2.zero_grad()
             loss_h.backward()
