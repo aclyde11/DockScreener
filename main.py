@@ -112,7 +112,7 @@ if __name__ == '__main__':
     for i in range(len(g)):
         values.append(g[i][1])
     values = np.array(values)
-    good_values = np.quantile(values, 0.05)
+    good_values = np.quantile(values, 0.03)
     good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
     print(good_values_tensor)
 
@@ -142,14 +142,14 @@ if __name__ == '__main__':
 
     # create optimizer
     optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
-    optimizer2 = torch.optim.AdamW(net2.parameters(), lr=3e-4)
+    optimizer2 = torch.optim.AdamW(net2.parameters(), lr=1e-3)
 
     # net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
 
     lossf = F.mse_loss
-    second_lossf = torch.nn.L1Loss(reduction='none')
+    second_lossf = torch.nn.MSELoss(reduction='none')
     for epoch in range(50):
         net.train()
         train_avg = Avg()
@@ -220,7 +220,7 @@ if __name__ == '__main__':
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
-            print("epoch", epoch, "test loss", test_avg.avg(), r2.r2(), r2.nefr(0.05,0.05), r2.nefr(0.1,0.1), r2.nefr(0.01,0.01))
+            print("epoch", epoch, "test loss", test_avg.avg(), r2.r2(), r2.nefr(0.05,0.05), r2.nefr(0.1,0.1), r2.nefr(0.01,0.01), r2.nefr(0.001,0.001))
             preds = np.array(r2.preds, dtype=np.float32)
             trues = np.array(r2.trues, dtype=np.float32)
             out = np.stack([preds, trues]).astype(np.float16)
