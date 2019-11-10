@@ -160,7 +160,7 @@ if __name__ == '__main__':
                 t0 = time.time()
             v = v.to(dev)
             v_pred, p = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            v_small = net2(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev), p)
+            v_small = net2(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev), p.detach())
 
             v_pred = v_pred.view(v.shape[0], -1)
             v_small = v_small.view(v.shape[0], -1)
