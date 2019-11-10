@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 import multiprocessing
 from features import datasets
 from features import utils as featmaker
-from models.GAT import GAT
+from models.GAT import GAT, GAT_small
 from tqdm import tqdm
 import argparse
 from utils import Avg, MetricCollector
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     for i in range(len(g)):
         values.append(g[i][1])
     values = np.array(values)
-    good_values = np.quantile(values, 0.1)
+    good_values = np.quantile(values, 0.05)
     good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
     print(good_values_tensor)
 
@@ -137,10 +137,13 @@ if __name__ == '__main__':
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14, good_value=good_values_tensor).to(dev)
+    net2 = GAT_small(133, 14, prev_out=64 * 2).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
     optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
+    optimizer2 = torch.optim.AdamW(net2.parameters(), lr=3e-4)
+
     # net.load_state_dict(torch.load("model.pt"))
     # main loop
     dur = []
@@ -156,15 +159,22 @@ if __name__ == '__main__':
             if epoch >= 3:
                 t0 = time.time()
             v = v.to(dev)
-            v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+            v_pred, p = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+            v_small = net2(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev), p)
 
             v_pred = v_pred.view(v.shape[0], -1)
             v_small = v_small.view(v.shape[0], -1)
+
+
             loss_h = second_lossf(v, v_small) * (v <= good_values_tensor)
-            loss = lossf(v, v_pred).mean() +  loss_h.mean()
+            loss = lossf(v, v_pred).mean()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+            optimizer2.zero_grad()
+            loss_h.backward()
+            optimizer2.step()
             train_avg(loss.item())
 
         # else:
@@ -197,7 +207,8 @@ if __name__ == '__main__':
             r2= MetricCollector()
             for g, v in test_loader:
                 v = v.to(dev)
-                v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                v_pred, p = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
+                v_small = net2(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev), p)
 
                 v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)

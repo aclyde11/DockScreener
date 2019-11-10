@@ -138,10 +138,5 @@ class GAT(nn.Module):
         p = F.elu(h)
         h_out = self.final_layer(p) #[batch, 1]
 
-        mask = h_out < self.g
-        # h_small = h_out * mask
-
-        h_small = self.gat_small(g, n , e, p)
-
-        return h_out, h_small, mask
+        return h_out, p
 
