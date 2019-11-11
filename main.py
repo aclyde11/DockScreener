@@ -155,6 +155,8 @@ if __name__ == '__main__':
         train_avg = Avg()
         # if epoch < 10:
         for g, v in tqdm(train_loader):
+            optimizer2.zero_grad()
+            optimizer.zero_grad()
 
             if epoch >= 3:
                 t0 = time.time()
@@ -170,12 +172,9 @@ if __name__ == '__main__':
             loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
             loss = lossf(v, v_pred).mean()
 
-            if epoch < 10:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            loss.backward()
+            optimizer.step()
 
-            optimizer2.zero_grad()
             loss_h.backward()
             optimizer2.step()
             train_avg(loss.item())
