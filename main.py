@@ -167,7 +167,6 @@ if __name__ == '__main__':
             v_pred = v_pred.view(v.shape[0], -1)
             v_small = v_small.view(v.shape[0], -1)
 
-
             loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
             loss = lossf(v, v_pred).mean()
 
