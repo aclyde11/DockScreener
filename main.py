@@ -112,7 +112,7 @@ if __name__ == '__main__':
     for i in range(len(g)):
         values.append(g[i][1])
     values = np.array(values)
-    good_values = np.quantile(values, 0.03)
+    good_values = np.quantile(values, 0.05)
     good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
     print(good_values_tensor)
 
@@ -141,8 +141,8 @@ if __name__ == '__main__':
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
-    optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
-    optimizer2 = torch.optim.AdamW(net2.parameters(), lr=1e-3)
+    optimizer = torch.optim.SGD(net.parameters(), lr=3e-4)
+    optimizer2 = torch.optim.SGD(net2.parameters(), lr=1e-3)
 
     # net.load_state_dict(torch.load("model.pt"))
     # main loop
@@ -159,8 +159,10 @@ if __name__ == '__main__':
             if epoch >= 3:
                 t0 = time.time()
             v = v.to(dev)
-            v_pred, p = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-            v_small = net2(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev), p.detach())
+            af = g.ndata['atom_features'].to(dev)
+            ge = g.edata['edge_features'].to(dev)
+            v_pred, p = net(g, af, ge)
+            v_small = net2(g, af, ge, p.detach())
 
             v_pred = v_pred.view(v.shape[0], -1)
             v_small = v_small.view(v.shape[0], -1)
@@ -209,8 +211,12 @@ if __name__ == '__main__':
             r2= MetricCollector()
             for g, v in test_loader:
                 v = v.to(dev)
-                v_pred, p = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-                v_small = net2(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev), p)
+
+                v = v.to(dev)
+                af = g.ndata['atom_features'].to(dev)
+                ge = g.edata['edge_features'].to(dev)
+                v_pred, p = net(g, af, ge)
+                v_small = net2(g, af, ge, p.detach())
 
                 v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)
