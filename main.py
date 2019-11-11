@@ -141,8 +141,8 @@ if __name__ == '__main__':
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
-    optimizer = torch.optim.SGD(net.parameters(), lr=3e-4)
-    optimizer2 = torch.optim.SGD(net2.parameters(), lr=1e-3)
+    optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
+    optimizer2 = torch.optim.AdamW(net2.parameters(), lr=1e-3)
 
     # net.load_state_dict(torch.load("model.pt"))
     # main loop
