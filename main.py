@@ -15,8 +15,23 @@ import argparse
 from utils import Avg, MetricCollector
 import pickle
 import math
+import gpytorch
 import torch.backends.cudnn
 torch.backends.cudnn.benchmark = True
+
+
+class GPRegressionModel(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood):
+        super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
+        self.mean_module = gpytorch.means.ConstantMean()
+        self.covar_module = gpytorch.kernels.ScaleKernel(
+            gpytorch.kernels.RBFKernel()
+        )
+
+    def forward(self, x):
+        mean_x = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
 
@@ -227,10 +242,10 @@ if __name__ == '__main__':
                 test_avg(loss.item())
                 r2(v, v_pred)
 
-            x = np.concatenate([np.concatenate(ps, axis=0), np.array(r2.trues).reshape(-1,1)], axis=-1)
-            np.concatenate([x, np.array(r2.preds).reshape(-1,1)], axis=-1)
-
-            np.savez("outs.npz", x)
+            # x = np.concatenate([np.concatenate(ps, axis=0), np.array(r2.trues).reshape(-1,1)], axis=-1)
+            # np.concatenate([x, np.array(r2.preds).reshape(-1,1)], axis=-1)
+            #
+            # np.savez("outs.npz", x)
             print("Runnin guassian process")
 
             X_train = np.concatenate(ps, axis=0)
@@ -239,7 +254,38 @@ if __name__ == '__main__':
             gp.fit(X_train, r2.trues)
             print("SCore gp", gp.score(X_train, r2.trues))
 
-            r2.preds = gp.predict(X_train).flatten()
+            likelihood = gpytorch.likelihoods.GaussianLikelihood().cuda()
+            model = GPRegressionModel(X_train, np.array(r2.trues), likelihood).cuda()
+            model.train()
+            likelihood.train()
+
+            # Use the adam optimizer
+            optimizer = torch.optim.Adam([
+                {'params': model.parameters()},  # Includes GaussianLikelihood parameters
+            ], lr=0.1)
+
+            # "Loss" for GPs - the marginal log likelihood
+            mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
+
+            training_iterations = 20
+
+
+            def train():
+                for i in range(training_iterations):
+                    optimizer.zero_grad()
+                    output = model(X_train)
+                    loss = -mll(output, np.array(r2.trues))
+                    loss.backward()
+                    print('Iter %d/%d - Loss: %.3f' % (i + 1,
+                                                       training_iterations,
+                                                       loss.item()))
+                    optimizer.step()
+
+
+            print("training")
+            train()
+            print("done")
+            # r2.preds = gp.predict(X_train).flatten()
 
 
             print("epoch", epoch, "test loss", test_avg.avg(), r2.r2(), r2.nefr(0.05,0.05), r2.nefr(0.1,0.1), r2.nefr(0.01,0.01), r2.nefr(0.001,0.001))
