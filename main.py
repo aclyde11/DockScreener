@@ -153,6 +153,7 @@ if __name__ == '__main__':
     for epoch in range(50):
         net.train()
         train_avg = Avg()
+        train2_avg = Avg()
         # if epoch < 10:
         for g, v in tqdm(train_loader):
             optimizer2.zero_grad()
@@ -170,6 +171,7 @@ if __name__ == '__main__':
             v_small = v_small.view(v.shape[0], -1)
 
             loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
+            train2_avg(loss_h.item())
             loss = lossf(v, v_pred).mean()
 
             loss.backward()
@@ -201,11 +203,12 @@ if __name__ == '__main__':
         #         optimizer.step()
         #         train_avg(loss.item())
 
-        print("epoch", epoch, "train loss", train_avg.avg())
+        print("epoch", epoch, "train loss", train_avg.avg(), train2_avg.avg())
         torch.save( net.state_dict(), 'model.pt')
         net.eval()
         with torch.no_grad():
             test_avg = Avg()
+            test2_avg = Avg()
             r2= MetricCollector()
             for g, v in test_loader:
                 v = v.to(dev)
@@ -219,6 +222,8 @@ if __name__ == '__main__':
                 v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)
                 v_small =  v_small.view(v.shape[0], -1)
+
+
 
                 v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
                 loss = lossf(v,v_pred).mean()
