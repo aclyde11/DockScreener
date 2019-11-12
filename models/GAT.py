@@ -39,8 +39,8 @@ class GAT_small(nn.Module):
         #     aggregator_type='sum')
 
         self.final_layer = nn.Sequential(
-            nn.BatchNorm1d(out_feats * 2 + prev_out),
-            nn.Linear(out_feats * 2 + prev_out, 32),
+            nn.BatchNorm1d(out_feats * 2),
+            nn.Linear(out_feats * 2, 32),
             nn.ReLU(),
             nn.Dropout(0.05),
             nn.Linear(32,32),
@@ -68,7 +68,7 @@ class GAT_small(nn.Module):
         h = self.conv2(g,h)   # returns [nodes, out_features]
         h1 = self.pooling(g,h) # returns [batch, out_features]
         h2 = self.pooling2(g,h)
-        h = torch.cat([p, h1,h2], dim=-1)
+        h = torch.cat([h1,h2], dim=-1)
         h = F.elu(h)
 
         h = self.final_layer(h) #[batch, 1]
