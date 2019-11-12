@@ -137,7 +137,7 @@ if __name__ == '__main__':
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14).to(dev)
-    net.load_state_dict("model.pt")
+    net.load_state_dict(torch.load("model.pt"))
     net2 = GAT_small(133, 14, prev_out=64 * 2).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
