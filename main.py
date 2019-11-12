@@ -227,8 +227,8 @@ if __name__ == '__main__':
                 test_avg(loss.item())
                 r2(v, v_pred)
 
-            x = np.concatenate([np.concatenate(ps, axis=0), r2.trues], axis=-1)
-            np.concatenate([x, r2.preds], axis=-1)
+            x = np.concatenate([np.concatenate(ps, axis=0), np.array(r2.trues).reshape(-1,1)], axis=-1)
+            np.concatenate([x, r2.preds.reshape(-1,1)], axis=-1)
 
             np.savez("outs.npz", x)
             print("Runnin guassian process")
