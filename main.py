@@ -137,6 +137,7 @@ if __name__ == '__main__':
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14, good_value=good_values_tensor).to(dev)
+    net.load_state_dict("model.pt")
     net2 = GAT_small(133, 14, prev_out=64 * 2).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
@@ -151,33 +152,33 @@ if __name__ == '__main__':
     lossf = F.mse_loss
     second_lossf = torch.nn.MSELoss(reduction='none')
     for epoch in range(50):
-        net.train()
-        train_avg = Avg()
-        # if epoch < 10:
-        for g, v in tqdm(train_loader):
-            optimizer2.zero_grad()
-            optimizer.zero_grad()
-
-            if epoch >= 3:
-                t0 = time.time()
-            v = v.to(dev)
-            af = g.ndata['atom_features'].to(dev)
-            ge = g.edata['edge_features'].to(dev)
-            v_pred, p = net(g, af, ge)
-            v_small = net2(g, af, ge, p.detach())
-
-            v_pred = v_pred.view(v.shape[0], -1)
-            v_small = v_small.view(v.shape[0], -1)
-
-            loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
-            loss = lossf(v, v_pred).mean()
-
-            loss.backward()
-            optimizer.step()
-
-            loss_h.backward()
-            optimizer2.step()
-            train_avg(loss.item())
+        # net.train()
+        # train_avg = Avg()
+        # # if epoch < 10:
+        # for g, v in tqdm(train_loader):
+        #     optimizer2.zero_grad()
+        #     optimizer.zero_grad()
+        #
+        #     if epoch >= 3:
+        #         t0 = time.time()
+        #     v = v.to(dev)
+        #     af = g.ndata['atom_features'].to(dev)
+        #     ge = g.edata['edge_features'].to(dev)
+        #     v_pred, p = net(g, af, ge)
+        #     v_small = net2(g, af, ge, p.detach())
+        #
+        #     v_pred = v_pred.view(v.shape[0], -1)
+        #     v_small = v_small.view(v.shape[0], -1)
+        #
+        #     loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
+        #     loss = lossf(v, v_pred).mean()
+        #
+        #     loss.backward()
+        #     optimizer.step()
+        #
+        #     loss_h.backward()
+        #     optimizer2.step()
+        #     train_avg(loss.item())
 
         # else:
         #     if epoch == 10:
@@ -201,13 +202,14 @@ if __name__ == '__main__':
         #         optimizer.step()
         #         train_avg(loss.item())
 
-        print("epoch", epoch, "train loss", train_avg.avg())
-        torch.save( net.state_dict(), 'model.pt')
-        net.eval()
+        # print("epoch", epoch, "train loss", train_avg.avg())
+        # torch.save( net.state_dict(), 'model.pt')
+        # net.eval()
         with torch.no_grad():
             test_avg = Avg()
             r2= MetricCollector()
-            for g, v in test_loader:
+            ps = []
+            for g, v in train_loader:
                 v = v.to(dev)
 
                 v = v.to(dev)
@@ -215,15 +217,31 @@ if __name__ == '__main__':
                 ge = g.edata['edge_features'].to(dev)
                 v_pred, p = net(g, af, ge)
                 v_small = net2(g, af, ge, p.detach())
-
+                ps.append(p.detach().cpu().numpy())
                 v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)
-                v_small =  v_small.view(v.shape[0], -1)
+                # v_small =  v_small.view(v.shape[0], -1)
 
-                v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
+                # v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
+
+            x = np.concatenate([np.concatenate(ps, axis=0), r2.trues], axis=-1)
+            np.concatenate([x, r2.preds], axis=-1)
+
+            np.savez("outs.npz", x)
+            print("Runnin guassian process")
+
+            X_train = np.concatenate(ps, axis=0)
+            from sklearn.gaussian_process import GaussianProcessRegressor
+            gp = GaussianProcessRegressor()
+            gp.fit(X_train, r2.trues)
+            print("SCore gp", gp.score(X_train, r2.trues))
+
+            r2.preds = gp.predict(X_train).flatten()
+
+
             print("epoch", epoch, "test loss", test_avg.avg(), r2.r2(), r2.nefr(0.05,0.05), r2.nefr(0.1,0.1), r2.nefr(0.01,0.01), r2.nefr(0.001,0.001))
             preds = np.array(r2.preds, dtype=np.float32)
             trues = np.array(r2.trues, dtype=np.float32)

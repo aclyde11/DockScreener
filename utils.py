@@ -36,9 +36,12 @@ class MetricCollector:
     def erfmax(self, r, y):
         return (int(min(r, y) * self.preds.shape[0]))
 
-    def nefr(self, *i):
-        return self.erf(*i) / self.erfmax(*i)
+    def erftotal(self, r, y):
+        return int(y * self.preds.shape[0])
 
+    def nefr(self, *i):
+        #return self.erf(*i) / self.erfmax(*i) #divides by the max retrival, but I think we should divide by the true possible numebr
+        return self.erf(*i) / erftotal(*i)
 
     def r2(self):
         try:
