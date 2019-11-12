@@ -209,7 +209,7 @@ if __name__ == '__main__':
             test_avg = Avg()
             r2= MetricCollector()
             ps = []
-            for g, v in train_loader:
+            for g, v in tqdm(train_loader):
                 v = v.to(dev)
 
                 v = v.to(dev)
