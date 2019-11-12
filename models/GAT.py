@@ -70,11 +70,10 @@ class GAT_small(nn.Module):
         return h
 
 class GAT(nn.Module):
-    def __init__(self, in_dim, edge_feats, good_value=1e1):
+    def __init__(self, in_dim, edge_feats):
         super(GAT, self).__init__()
         in_feats = in_dim
         out_feats = 64
-        self.g = good_value
         self.edge_layer = nn.Linear(edge_feats, out_feats * out_feats)
 
         self.conv1 = dgl.nn.pytorch.conv.SAGEConv(

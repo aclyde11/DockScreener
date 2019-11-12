@@ -107,25 +107,25 @@ if __name__ == '__main__':
         g = pickle.load(f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    print("getting top 10% values")
-    values = []
-    for i in range(len(g)):
-        values.append(g[i][1])
-    values = np.array(values)
-    good_values = np.quantile(values, 0.05)
-    good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
-    print(good_values_tensor)
-
-    print("1%", good_values)
-    good_values = np.where(values < good_values)
-    print(good_values)
-    values = []
-    for i in good_values[0]:
-        values.append(g[i])
-
-
-    g_good = datasets.GraphDataset(values)
-    train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
+    # print("getting top 10% values")
+    # values = []
+    # for i in range(len(g)):
+    #     values.append(g[i][1])
+    # values = np.array(values)
+    # good_values = np.quantile(values, 0.05)
+    # good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
+    # print(good_values_tensor)
+    #
+    # print("1%", good_values)
+    # good_values = np.where(values < good_values)
+    # print(good_values)
+    # values = []
+    # for i in good_values[0]:
+    #     values.append(g[i])
+    #
+    #
+    # g_good = datasets.GraphDataset(values)
+    # train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
 
     #
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    net = GAT(133, 14, good_value=good_values_tensor).to(dev)
+    net = GAT(133, 14).to(dev)
     net.load_state_dict("model.pt")
     net2 = GAT_small(133, 14, prev_out=64 * 2).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
