@@ -167,8 +167,8 @@ if __name__ == '__main__':
             v_pred, p = net(g, af, ge)
             v_small = net2(g, af, ge, p.detach())
 
-            v_pred = v_pred.view(v.shape[0], -1)
-            v_small = v_small.view(v.shape[0], -1)
+            v_pred = v_pred.view(v.shape[0], -1) * 10.0
+            v_small = v_small.view(v.shape[0], -1) * 10.0
 
             loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
             train2_avg(loss_h.item())
