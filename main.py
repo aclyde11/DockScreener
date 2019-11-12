@@ -15,23 +15,8 @@ import argparse
 from utils import Avg, MetricCollector
 import pickle
 import math
-import gpytorch
 import torch.backends.cudnn
 torch.backends.cudnn.benchmark = True
-
-
-class GPRegressionModel(gpytorch.models.ExactGP):
-    def __init__(self, train_x, train_y, likelihood):
-        super(GPRegressionModel, self).__init__(train_x, train_y, likelihood)
-        self.mean_module = gpytorch.means.ConstantMean()
-        self.covar_module = gpytorch.kernels.ScaleKernel(
-            gpytorch.kernels.RBFKernel()
-        )
-
-    def forward(self, x):
-        mean_x = self.mean_module(x)
-        covar_x = self.covar_module(x)
-        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
 
 
 
@@ -122,25 +107,25 @@ if __name__ == '__main__':
         g = pickle.load(f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    # print("getting top 10% values")
-    # values = []
-    # for i in range(len(g)):
-    #     values.append(g[i][1])
-    # values = np.array(values)
-    # good_values = np.quantile(values, 0.05)
-    # good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
-    # print(good_values_tensor)
-    #
-    # print("1%", good_values)
-    # good_values = np.where(values < good_values)
-    # print(good_values)
-    # values = []
-    # for i in good_values[0]:
-    #     values.append(g[i])
-    #
-    #
-    # g_good = datasets.GraphDataset(values)
-    # train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
+    print("getting top 10% values")
+    values = []
+    for i in range(len(g)):
+        values.append(g[i][1])
+    values = np.array(values)
+    good_values = np.quantile(values, 0.05)
+    good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
+    print(good_values_tensor)
+
+    print("1%", good_values)
+    good_values = np.where(values < good_values)
+    print(good_values)
+    values = []
+    for i in good_values[0]:
+        values.append(g[i])
+
+
+    g_good = datasets.GraphDataset(values)
+    train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
 
     #
@@ -151,8 +136,7 @@ if __name__ == '__main__':
 
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    net = GAT(133, 14).to(dev)
-    net.load_state_dict(torch.load("model.pt"))
+    net = GAT(133, 14, good_value=good_values_tensor).to(dev)
     net2 = GAT_small(133, 14, prev_out=64 * 2).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
@@ -167,33 +151,33 @@ if __name__ == '__main__':
     lossf = F.mse_loss
     second_lossf = torch.nn.MSELoss(reduction='none')
     for epoch in range(50):
-        # net.train()
-        # train_avg = Avg()
-        # # if epoch < 10:
-        # for g, v in tqdm(train_loader):
-        #     optimizer2.zero_grad()
-        #     optimizer.zero_grad()
-        #
-        #     if epoch >= 3:
-        #         t0 = time.time()
-        #     v = v.to(dev)
-        #     af = g.ndata['atom_features'].to(dev)
-        #     ge = g.edata['edge_features'].to(dev)
-        #     v_pred, p = net(g, af, ge)
-        #     v_small = net2(g, af, ge, p.detach())
-        #
-        #     v_pred = v_pred.view(v.shape[0], -1)
-        #     v_small = v_small.view(v.shape[0], -1)
-        #
-        #     loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
-        #     loss = lossf(v, v_pred).mean()
-        #
-        #     loss.backward()
-        #     optimizer.step()
-        #
-        #     loss_h.backward()
-        #     optimizer2.step()
-        #     train_avg(loss.item())
+        net.train()
+        train_avg = Avg()
+        # if epoch < 10:
+        for g, v in tqdm(train_loader):
+            optimizer2.zero_grad()
+            optimizer.zero_grad()
+
+            if epoch >= 3:
+                t0 = time.time()
+            v = v.to(dev)
+            af = g.ndata['atom_features'].to(dev)
+            ge = g.edata['edge_features'].to(dev)
+            v_pred, p = net(g, af, ge)
+            v_small = net2(g, af, ge, p.detach())
+
+            v_pred = v_pred.view(v.shape[0], -1)
+            v_small = v_small.view(v.shape[0], -1)
+
+            loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
+            loss = lossf(v, v_pred).mean()
+
+            loss.backward()
+            optimizer.step()
+
+            loss_h.backward()
+            optimizer2.step()
+            train_avg(loss.item())
 
         # else:
         #     if epoch == 10:
@@ -217,14 +201,13 @@ if __name__ == '__main__':
         #         optimizer.step()
         #         train_avg(loss.item())
 
-        # print("epoch", epoch, "train loss", train_avg.avg())
-        # torch.save( net.state_dict(), 'model.pt')
-        # net.eval()
+        print("epoch", epoch, "train loss", train_avg.avg())
+        torch.save( net.state_dict(), 'model.pt')
+        net.eval()
         with torch.no_grad():
             test_avg = Avg()
             r2= MetricCollector()
-            ps = []
-            for g, v in tqdm(train_loader):
+            for g, v in test_loader:
                 v = v.to(dev)
 
                 v = v.to(dev)
@@ -232,62 +215,15 @@ if __name__ == '__main__':
                 ge = g.edata['edge_features'].to(dev)
                 v_pred, p = net(g, af, ge)
                 v_small = net2(g, af, ge, p.detach())
-                ps.append(p.detach().cpu().numpy())
+
                 v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)
-                # v_small =  v_small.view(v.shape[0], -1)
+                v_small =  v_small.view(v.shape[0], -1)
 
-                # v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
+                v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)
-
-            # x = np.concatenate([np.concatenate(ps, axis=0), np.array(r2.trues).reshape(-1,1)], axis=-1)
-            # np.concatenate([x, np.array(r2.preds).reshape(-1,1)], axis=-1)
-            #
-            # np.savez("outs.npz", x)
-            print("Runnin guassian process")
-
-            X_train = np.concatenate(ps, axis=0)
-            from sklearn.gaussian_process import GaussianProcessRegressor
-            gp = GaussianProcessRegressor()
-            gp.fit(X_train, r2.trues)
-            print("SCore gp", gp.score(X_train, r2.trues))
-
-            likelihood = gpytorch.likelihoods.GaussianLikelihood().cuda()
-            model = GPRegressionModel(X_train, np.array(r2.trues), likelihood).cuda()
-            model.train()
-            likelihood.train()
-
-            # Use the adam optimizer
-            optimizer = torch.optim.Adam([
-                {'params': model.parameters()},  # Includes GaussianLikelihood parameters
-            ], lr=0.1)
-
-            # "Loss" for GPs - the marginal log likelihood
-            mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model)
-
-            training_iterations = 20
-
-
-            def train():
-                for i in range(training_iterations):
-                    optimizer.zero_grad()
-                    output = model(X_train)
-                    loss = -mll(output, np.array(r2.trues))
-                    loss.backward()
-                    print('Iter %d/%d - Loss: %.3f' % (i + 1,
-                                                       training_iterations,
-                                                       loss.item()))
-                    optimizer.step()
-
-
-            print("training")
-            train()
-            print("done")
-            # r2.preds = gp.predict(X_train).flatten()
-
-
             print("epoch", epoch, "test loss", test_avg.avg(), r2.r2(), r2.nefr(0.05,0.05), r2.nefr(0.1,0.1), r2.nefr(0.01,0.01), r2.nefr(0.001,0.001))
             preds = np.array(r2.preds, dtype=np.float32)
             trues = np.array(r2.trues, dtype=np.float32)

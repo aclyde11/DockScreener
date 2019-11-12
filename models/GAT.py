@@ -25,13 +25,18 @@ class GAT_small(nn.Module):
         self.conv1 = dgl.nn.pytorch.conv.SAGEConv(
             in_feats=in_feats,
             out_feats=out_feats,
-            aggregator_type='lstm')
+            aggregator_type='mean')
 
-        self.conv2 = dgl.nn.pytorch.conv.NNConv(
+        self.conv2 = dgl.nn.pytorch.conv.SAGEConv(
             in_feats=out_feats,
             out_feats=out_feats,
-            edge_func=self.edge_layer,
-            aggregator_type='sum')
+            aggregator_type='mean')
+
+        # self.conv2 = dgl.nn.pytorch.conv.NNConv(
+        #     in_feats=out_feats,
+        #     out_feats=out_feats,
+        #     edge_func=self.edge_layer,
+        #     aggregator_type='sum')
 
         self.final_layer = nn.Sequential(
             nn.BatchNorm1d(out_feats * 2 + prev_out),
@@ -60,7 +65,7 @@ class GAT_small(nn.Module):
     def forward(self, g, n, e, p):
         h = self.conv1(g,n)   # returns [nodes, out_features]
         h = F.elu(h)
-        h = self.conv2(g,h,e)   # returns [nodes, out_features]
+        h = self.conv2(g,h)   # returns [nodes, out_features]
         h1 = self.pooling(g,h) # returns [batch, out_features]
         h2 = self.pooling2(g,h)
         h = torch.cat([p, h1,h2], dim=-1)
