@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 import multiprocessing
 from features import datasets
 from features import utils as featmaker
-from models.GAT import GAT, GAT_small
+from models.GAT import GAT
 from tqdm import tqdm
 import argparse
 from utils import Avg, MetricCollector
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
-    optimizer = torch.optim.SGD(net.parameters(), lr=1e-4)
+    optimizer = torch.optim.Adam(net.parameters(), lr=1e-2)
 
     dur = []
 
