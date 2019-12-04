@@ -86,8 +86,8 @@ class GAT(nn.Module):
         out_feats = 64
 
 
-        self.gvo1 = dgl.nn.pytorch.conv.GraphConv(in_feats, out_feats, activation=F.relu)
-        self.gvo2 = dgl.nn.pytorch.conv.GraphConv(in_feats, out_feats, activation=F.relu)
+        self.gvo1 = dgl.nn.pytorch.conv.GraphConv(in_feats, in_feats, activation=F.relu)
+        self.gvo2 = dgl.nn.pytorch.conv.GraphConv(in_feats, in_feats, activation=F.relu)
 
         self.gvonc = dgl.nn.pytorch.GATConv(in_feats, out_feats, num_heads=8)
 
