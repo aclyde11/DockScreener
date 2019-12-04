@@ -11,8 +11,11 @@ class GAT(nn.Module):
         in_feats = in_dim
         out_feats = 128
 
-        self.gvo1 = dgl.nn.pytorch.conv.GraphConv(in_feats, in_feats, activation=F.relu)
-        self.gvo2 = dgl.nn.pytorch.conv.GraphConv(in_feats, in_feats, activation=F.relu)
+        self.edge1 = nn.Linear(edge_feats, in_feats * in_feats)
+        self.edge2 = nn.Linear(edge_feats, in_feats * in_feats)
+
+        self.gvo1 = dgl.nn.pytorch.conv.NNConv(in_feats, in_feats, self.edge1, aggregator_type='sum')
+        self.gvo2 = dgl.nn.pytorch.conv.NNConv(in_feats, in_feats, self.edge2, aggregator_type='sum')
 
         self.gvonc = dgl.nn.pytorch.GATConv(in_feats, out_feats, num_heads=8)
 
