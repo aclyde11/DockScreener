@@ -31,7 +31,7 @@ class GAT(nn.Module):
         self.gvonc = dgl.nn.pytorch.GATConv(in_feats, out_feats, num_heads=8)
 
         self.final_layer = nn.Sequential(
-            nn.Linear(out_feats * 2 * 8, 64),
+            nn.Linear(out_feats * 8, 64),
             nn.ReLU(),
             nn.Dropout(0.05),
             nn.Linear(64, 32),
@@ -70,10 +70,6 @@ class GAT(nn.Module):
         h = h.view(h.shape[0], -1)
 
         h1 = self.pooling(g, h)  # returns [batch, out_features]
-        h2 = self.pooling2(g, h)
-        h = torch.cat([h1, h2], dim=-1)
+        h_out = self.final_layer(h1)  # [batch, 1]
 
-        p = F.elu(h)
-        h_out = self.final_layer(p)  # [batch, 1]
-
-        return h_out, p
+        return h_out, None
