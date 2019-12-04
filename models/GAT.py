@@ -91,8 +91,8 @@ class GAT(nn.Module):
 
 
         self.final_layer = nn.Sequential(
-            nn.BatchNorm1d(out_feats * 2),
-            nn.Linear(out_feats * 2, 64),
+            nn.BatchNorm1d(out_feats * 2 * 8),
+            nn.Linear(out_feats * 2 * 8, 64),
             nn.ReLU(),
             nn.Dropout(0.05),
             nn.Linear(64,32),
