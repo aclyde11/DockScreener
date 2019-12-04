@@ -42,8 +42,8 @@ class GAT(nn.Module):
     '''
 
     def forward(self, g, n, e, return_fp=True):
-        h = self.gvo1(g, n)
-        h = self.gvo2(g, h)
+        h = self.gvo1(g, n, e)
+        h = self.gvo2(g, h, e)
         h = self.gvonc(g, h)  # returns [nodes, out_features, heads]
         h = F.elu(h)
         h = h.view(h.shape[0], -1)
