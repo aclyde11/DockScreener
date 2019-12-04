@@ -107,26 +107,6 @@ if __name__ == '__main__':
         g = pickle.load(f)
     train_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
-    print("getting top 10% values")
-    values = []
-    for i in range(len(g)):
-        values.append(g[i][1])
-    values = np.array(values)
-    good_values = np.quantile(values, 0.05)
-    good_values_tensor = torch.FloatTensor([good_values]).float().flatten().to(dev)
-    print(good_values_tensor)
-
-    print("1%", good_values)
-    good_values = np.where(values < good_values)
-    print(good_values)
-    values = []
-    for i in good_values[0]:
-        values.append(g[i])
-
-
-    g_good = datasets.GraphDataset(values)
-    train_best_loader = DataLoader(g_good, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
-
 
     #
     # g = datasets.GraphDataset(load_cora_data(args.e))
@@ -137,15 +117,11 @@ if __name__ == '__main__':
     test_loader = DataLoader(g, collate_fn=datasets.graph_collate, shuffle=True, num_workers=3, batch_size=BATCH_SIZE)
 
     net = GAT(133, 14).to(dev)
-    net2 = GAT_small(133, 14, prev_out=64 * 2).to(dev)
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
     optimizer = torch.optim.AdamW(net.parameters(), lr=3e-4)
-    optimizer2 = torch.optim.AdamW(net2.parameters(), lr=1e-3)
 
-    # net.load_state_dict(torch.load("model.pt"))
-    # main loop
     dur = []
 
     lossf = F.mse_loss
@@ -156,7 +132,6 @@ if __name__ == '__main__':
         train2_avg = Avg()
         # if epoch < 10:
         for g, v in tqdm(train_loader):
-            optimizer2.zero_grad()
             optimizer.zero_grad()
 
             if epoch >= 3:
@@ -165,20 +140,11 @@ if __name__ == '__main__':
             af = g.ndata['atom_features'].to(dev)
             ge = g.edata['edge_features'].to(dev)
             v_pred, p = net(g, af, ge)
-            v_small = net2(g, af, ge, p.detach())
 
-            v_pred = v_pred.view(v.shape[0], -1) * 10.0
-            v_small = v_small.view(v.shape[0], -1) * 10.0
-
-            loss_h = (second_lossf(v, v_small) * (v <= good_values_tensor)).mean()
-            train2_avg(loss_h.item())
             loss = lossf(v, v_pred).mean()
 
             loss.backward()
-            optimizer.step()
 
-            loss_h.backward()
-            optimizer2.step()
             train_avg(loss.item())
 
         # else:
@@ -217,15 +183,9 @@ if __name__ == '__main__':
                 af = g.ndata['atom_features'].to(dev)
                 ge = g.edata['edge_features'].to(dev)
                 v_pred, p = net(g, af, ge)
-                v_small = net2(g, af, ge, p.detach())
 
-                v = v.view(v.shape[0], -1)
                 v_pred  = v_pred.view(v.shape[0], -1)
-                v_small =  v_small.view(v.shape[0], -1)
 
-
-
-                v_pred = v_small * (v_pred <= good_values_tensor).float() + v_pred * (v_pred > good_values_tensor).float()
                 loss = lossf(v,v_pred).mean()
                 test_avg(loss.item())
                 r2(v, v_pred)

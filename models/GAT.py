@@ -15,6 +15,11 @@ GAT_parameters = {
     # linear network archtecture and activations
 }
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
 class GAT_small(nn.Module):
     def __init__(self, in_dim, edge_feats, prev_out=64):
         super(GAT_small, self).__init__()
@@ -79,26 +84,11 @@ class GAT(nn.Module):
         super(GAT, self).__init__()
         in_feats = in_dim
         out_feats = 64
-        self.edge_layer = nn.Linear(edge_feats, out_feats * out_feats)
-
-        self.conv1 = dgl.nn.pytorch.conv.SAGEConv(
-            in_feats=in_feats,
-            out_feats=out_feats,
-            aggregator_type='lstm')
 
 
+        self.gvonc = dgl.nn.pytorch.GATConv(in_feats, out_feats, num_heads=8)
 
 
-        self.conv3 = dgl.nn.pytorch.conv.NNConv(
-            in_feats=out_feats,
-            out_feats=out_feats,
-            edge_func=self.edge_layer,
-            aggregator_type='sum')
-
-        self.conv4 = self.conv2 = dgl.nn.pytorch.conv.SAGEConv(
-            in_feats=out_feats,
-            out_feats=out_feats,
-            aggregator_type='lstm')
 
         self.final_layer = nn.Sequential(
             nn.BatchNorm1d(out_feats * 2),
@@ -118,8 +108,6 @@ class GAT(nn.Module):
         )
         self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
 
-        self.gat_small = GAT_small(in_dim, edge_feats, prev_out=out_feats * 2)
-
 
     '''
     g: DglGraph
@@ -127,13 +115,8 @@ class GAT(nn.Module):
     e: edge feature matrix
     '''
     def forward(self, g, n, e, return_fp = True):
-        h = self.conv1(g,n)   # returns [nodes, out_features]
+        h = self.gvonc(g,n)   # returns [nodes, out_features]
         h = F.elu(h)
-        # h = self.conv2(g,h)   # returns [nodes, out_features]
-        # h = F.elu(h)
-        h = self.conv3(g,h,e) # returns [nodes, out_features]
-        h = F.elu(h)
-        h = self.conv4(g,h)   # returns [nodes, out_features]
 
         h1 = self.pooling(g,h) # returns [batch, out_features]
         h2 = self.pooling2(g,h)
