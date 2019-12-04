@@ -103,8 +103,7 @@ class GAT(nn.Module):
         self.pooling2 = dgl.nn.pytorch.glob.MaxPooling()
 
         self.gate_nn = nn.Sequential(
-            nn.BatchNorm1d(out_feats),
-            nn.Linear(out_feats, 1)
+            nn.Linear(out_feats * 8, 1)
         )
         self.pooling = dgl.nn.pytorch.glob.GlobalAttentionPooling(gate_nn=self.gate_nn)
 
