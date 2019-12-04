@@ -115,8 +115,9 @@ class GAT(nn.Module):
     e: edge feature matrix
     '''
     def forward(self, g, n, e, return_fp = True):
-        h = self.gvonc(g,n)   # returns [nodes, out_features]
+        h = self.gvonc(g,n)   # returns [nodes, out_features, heads]
         h = F.elu(h)
+        h = h.view(h.shape[0], -1)
 
         h1 = self.pooling(g,h) # returns [batch, out_features]
         h2 = self.pooling2(g,h)
