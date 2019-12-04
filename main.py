@@ -120,7 +120,7 @@ if __name__ == '__main__':
     print("TOTAL PARMS", sum(p.numel() for p in net.parameters() if p.requires_grad))
 
     # create optimizer
-    optimizer = torch.optim.Adam(net.parameters(), lr=1e-2)
+    optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
 
     dur = []
 
