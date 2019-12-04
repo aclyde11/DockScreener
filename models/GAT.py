@@ -86,6 +86,9 @@ class GAT(nn.Module):
         out_feats = 64
 
 
+        self.gvo1 = dgl.nn.pytorch.conv.GraphConv(in_feats, out_feats, activation=F.relu)
+        self.gvo2 = dgl.nn.pytorch.conv.GraphConv(in_feats, out_feats, activation=F.relu)
+
         self.gvonc = dgl.nn.pytorch.GATConv(in_feats, out_feats, num_heads=8)
 
 
@@ -114,7 +117,9 @@ class GAT(nn.Module):
     e: edge feature matrix
     '''
     def forward(self, g, n, e, return_fp = True):
-        h = self.gvonc(g,n)   # returns [nodes, out_features, heads]
+        h = self.gvo1(g,n)
+        h = self.gvo2(g, h)
+        h = self.gvonc(g,h)   # returns [nodes, out_features, heads]
         h = F.elu(h)
         h = h.view(h.shape[0], -1)
 
