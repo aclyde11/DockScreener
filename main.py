@@ -147,29 +147,8 @@ if __name__ == '__main__':
 
             train_avg(loss.item())
 
-        # else:
-        #     if epoch == 10:
-        #         optimizer = torch.optim.SGD(net.parameters(), lr=1e-5)
-        #
-        #     for g in optimizer.param_groups:
-        #         g['lr'] += 5e-5
-        #     for g, v in tqdm(train_best_loader):
-        #         if epoch >= 3:
-        #             t0 = time.time()
-        #         v = v.to(dev)
-        #         v_pred, v_small, _ = net(g, g.ndata['atom_features'].to(dev), g.edata['edge_features'].to(dev))
-        #
-        #         v = v.view(v.shape[0], -1)
-        #         v_pred = v_pred.view(v.shape[0], -1)
-        #         v_small = v_small.view(v.shape[0], -1)
-        #         loss_h = second_lossf(v, v_small) * (v <= good_values_tensor)
-        #         loss = lossf(v, v_pred).mean() + 0.5 * loss_h.mean()
-        #         optimizer.zero_grad()
-        #         loss.backward()
-        #         optimizer.step()
-        #         train_avg(loss.item())
 
-        print("epoch", epoch, "train loss", train_avg.avg(), train2_avg.avg())
+        print("epoch", epoch, "train loss", train_avg.avg())
         torch.save( net.state_dict(), 'model.pt')
         net.eval()
         with torch.no_grad():
