@@ -15,7 +15,11 @@ class GAT(nn.Module):
         self.edge2 = nn.Linear(edge_feats, in_feats * in_feats)
 
         self.gvo1 = dgl.nn.pytorch.conv.NNConv(in_feats, in_feats, self.edge1, aggregator_type='sum')
+        self.gvo1a = dgl.nn.pytorch.conv.NNConv(in_feats, in_feats, self.edge1, aggregator_type='sum')
+
+
         self.gvo2 = dgl.nn.pytorch.conv.NNConv(in_feats, in_feats, self.edge2, aggregator_type='sum')
+        self.gvo2a = dgl.nn.pytorch.conv.NNConv(in_feats, in_feats, self.edge2, aggregator_type='sum')
 
         self.gvonc = dgl.nn.pytorch.GATConv(in_feats, out_feats, num_heads=8)
 
@@ -43,7 +47,13 @@ class GAT(nn.Module):
 
     def forward(self, g, n, e, return_fp=True):
         h = self.gvo1(g, n, e)
+        h = F.relu(h)
+        h = self.gvo1a(g, h, e)
+        h = F.relu(h)
         h = self.gvo2(g, h, e)
+        h = F.relu(h)
+        h = self.gvo2a(g, h, e)
+        h = F.relu(h)
         h = self.gvonc(g, h)  # returns [nodes, out_features, heads]
         h = F.elu(h)
         h = h.view(h.shape[0], -1)
